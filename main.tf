@@ -70,6 +70,8 @@ resource "aws_security_group" "allow_kube_api_server" {
   }
 }
 
+resource "aws_eip" "instance_elastic_ip" {}
+
 resource "aws_instance" "minikube_instance" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = "t3.large"
@@ -84,8 +86,12 @@ resource "aws_instance" "minikube_instance" {
     host        = self.public_ip
   }
 
+  provisioner "file" {
+    source      = "${path.module}/scripts/setup-minikube.sh"
+    destination = "/home/ubuntu/setup-minikube.sh"
+  }
   provisioner "remote-exec" {
-    script = "${path.module}/scripts/setup-minikube.sh"
+    inline = ["chmod +x /home/ubuntu/setup-minikube.sh", "/home/ubuntu/setup-minikube.sh ${aws_eip.instance_elastic_ip.public_ip}"]
   }
 }
 
@@ -97,9 +103,14 @@ resource "null_resource" "download_kubeconfig" {
     "timestamp" = timestamp()
   }
   provisioner "local-exec" {
-    command = "${path.module}/scripts/download_kubeconfig.sh \"$PRIVATE_KEY\" ubuntu ${aws_instance.minikube_instance.public_ip} ${var.kubeconfig_output_location}"
+    command = "${path.module}/scripts/download_kubeconfig.sh \"$PRIVATE_KEY\" ubuntu ${aws_eip.instance_elastic_ip.public_ip} ${var.kubeconfig_output_location}"
     environment = {
       PRIVATE_KEY = tls_private_key.private_key.private_key_pem
     }
   }
+}
+
+resource "aws_eip_association" "minikube_eip_assoc" {
+  instance_id   = aws_instance.minikube_instance.id
+  allocation_id = aws_eip.instance_elastic_ip.id
 }

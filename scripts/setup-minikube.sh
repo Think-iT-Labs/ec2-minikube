@@ -2,6 +2,8 @@
 
 set -o errexit
 
+ELASTIC_IP=$1
+
 sudo apt update
 sudo apt install -y curl apt-transport-https
 
@@ -27,7 +29,7 @@ sudo usermod -aG docker $USER
 
 sudo apt install -y conntrack
 
-sudo minikube start --driver=none --embed-certs --apiserver-ips=$(curl ifconfig.co)
+sudo minikube start --driver=none --embed-certs --apiserver-ips=${ELASTIC_IP}
 sudo minikube addons enable ingress
 sudo kubectl version -o json
 sudo kubectl cluster-info
