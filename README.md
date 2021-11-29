@@ -1,5 +1,9 @@
 # EC2-Minikube
 
+## Architecture
+
+![Architecture](images/architecture.drawio.png)
+
 ## Usage
 
 ### Provisioning the Infrastructure
