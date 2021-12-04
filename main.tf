@@ -23,7 +23,7 @@ resource "aws_key_pair" "aws_keypair" {
 }
 
 resource "aws_security_group" "allow_kube_api_server" {
-  name        = "allow_kube_api_server"
+  name        = "${var.minikube_instance_name}-allow-kube-api-server"
   description = "Allow TLS inbound traffic"
 
   ingress = [
@@ -73,11 +73,14 @@ resource "aws_security_group" "allow_kube_api_server" {
 resource "aws_eip" "instance_elastic_ip" {}
 
 resource "aws_instance" "minikube_instance" {
-  ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.large"
-  key_name      = aws_key_pair.aws_keypair.key_name
-
+  ami             = data.aws_ami.ubuntu.id
+  instance_type   = "t3.large"
+  key_name        = aws_key_pair.aws_keypair.key_name
   security_groups = [aws_security_group.allow_kube_api_server.name]
+
+  tags = {
+    Name = var.minikube_instance_name
+  }
 
   connection {
     type        = "ssh"
