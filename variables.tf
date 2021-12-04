@@ -1,3 +1,9 @@
+variable "region" {
+  type        = string
+  description = "AWS Region"
+  default     = "eu-west-1"
+}
+
 variable "kubeconfig_output_location" {
   type        = string
   description = "KubeConfig file Location"
