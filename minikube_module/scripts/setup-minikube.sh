@@ -27,7 +27,7 @@ sudo apt update
 sudo apt install -y docker-ce docker-ce-cli containerd.io
 sudo usermod -aG docker $USER
 
-sudo apt install -y conntrack socat
+sudo apt install -y conntrack
 
 sudo minikube start --driver=none --embed-certs --apiserver-ips=${ELASTIC_IP}
 sudo minikube addons enable ingress
