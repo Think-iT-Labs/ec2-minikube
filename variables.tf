@@ -6,7 +6,7 @@ variable "region" {
 
 variable "kubeconfig_output_location" {
   type        = string
-  description = "KubeConfig file Location"
+  description = "KubeConfig file Location (relative path)"
 }
 
 variable "minikube_instance_name" {
