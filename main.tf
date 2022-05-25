@@ -24,7 +24,7 @@ resource "aws_key_pair" "aws_keypair" {
 
 resource "aws_security_group" "allow_kube_api_server" {
   name        = "${var.minikube_instance_name}-allow-kube-api-server"
-  description = "Allow TLS inbound traffic"
+  description = "Allow incoming K8S API Server traffic"
 
   ingress = [
     {
@@ -70,13 +70,47 @@ resource "aws_security_group" "allow_kube_api_server" {
   }
 }
 
+resource "aws_security_group" "allow_additional_exposed_ports" {
+  name        = "${var.minikube_instance_name}-allow-additional-exposed-ports"
+  description = "Allow exposed ports from services"
+  ingress = [
+    for exposed_port in var.exposed_ports : {
+      description      = "allow ports ${exposed_port.port}"
+      from_port        = exposed_port.port
+      to_port          = exposed_port.port
+      protocol         = "-1"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+      prefix_list_ids  = []
+      security_groups  = []
+      self             = false
+    }
+  ]
+  egress = [
+    {
+      description      = "allow all"
+      from_port        = 0
+      to_port          = 0
+      protocol         = "-1"
+      cidr_blocks      = ["0.0.0.0/0"]
+      ipv6_cidr_blocks = ["::/0"]
+      prefix_list_ids  = []
+      security_groups  = []
+      self             = false
+    }
+  ]
+}
+
 resource "aws_eip" "instance_elastic_ip" {}
 
 resource "aws_instance" "minikube_instance" {
-  ami             = data.aws_ami.ubuntu.id
-  instance_type   = "t3.large"
-  key_name        = aws_key_pair.aws_keypair.key_name
-  security_groups = [aws_security_group.allow_kube_api_server.name]
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = "t3.large"
+  key_name      = aws_key_pair.aws_keypair.key_name
+  security_groups = [
+    aws_security_group.allow_kube_api_server.name,
+    aws_security_group.allow_additional_exposed_ports.name
+  ]
 
   tags = {
     Name = var.minikube_instance_name
@@ -90,11 +124,11 @@ resource "aws_instance" "minikube_instance" {
   }
 
   provisioner "file" {
-    source      = "${path.module}/scripts/setup-minikube.sh"
-    destination = "/home/ubuntu/setup-minikube.sh"
+    source      = "${path.module}/scripts/setup_minikube.sh"
+    destination = "/home/ubuntu/setup_minikube.sh"
   }
   provisioner "remote-exec" {
-    inline = ["chmod +x /home/ubuntu/setup-minikube.sh", "/home/ubuntu/setup-minikube.sh ${aws_eip.instance_elastic_ip.public_ip}"]
+    inline = ["chmod +x /home/ubuntu/setup_minikube.sh", "/home/ubuntu/setup_minikube.sh ${aws_eip.instance_elastic_ip.public_ip}"]
   }
 }
 
