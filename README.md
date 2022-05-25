@@ -4,6 +4,9 @@
 
 ![Architecture](images/architecture.drawio.png)
 
+## Pre-requisite
+- yq on your host instance, go [here](https://github.com/mikefarah/yq) to install
+
 ## Usage
 
 ### Provisioning the Infrastructure
