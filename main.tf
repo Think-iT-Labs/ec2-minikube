@@ -78,20 +78,7 @@ resource "aws_security_group" "allow_additional_exposed_ports" {
       description      = "allow ports ${exposed_port.port}"
       from_port        = exposed_port.port
       to_port          = exposed_port.port
-      protocol         = "-1"
-      cidr_blocks      = ["0.0.0.0/0"]
-      ipv6_cidr_blocks = ["::/0"]
-      prefix_list_ids  = []
-      security_groups  = []
-      self             = false
-    }
-  ]
-  egress = [
-    {
-      description      = "allow all"
-      from_port        = 0
-      to_port          = 0
-      protocol         = "-1"
+      protocol         = exposed_port.protocol
       cidr_blocks      = ["0.0.0.0/0"]
       ipv6_cidr_blocks = ["::/0"]
       prefix_list_ids  = []
