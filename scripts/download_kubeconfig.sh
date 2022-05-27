@@ -17,10 +17,11 @@ chmod 400 $TMP_PEM_FILE
 # Getting the KuebConfig
 ssh -i $TMP_PEM_FILE -o StrictHostKeyChecking=no $REMOTE_USER@$REMOTE_ADDR "sudo cat /root/.kube/config" >$TMP_KUBECONFIG
 
-if ! command -v yq &> /dev/null
-then
+if ! command -v yq &>/dev/null; then
     echo "yq could not be found, you can install it from here https://github.com/mikefarah/yq"
     exit 1
 fi
 
 yq eval ".clusters[0].cluster.server = \"https://${REMOTE_ADDR}:8443\"" "$TMP_KUBECONFIG" >$OUTPUT_FILE
+
+chmod 600 $OUTPUT_FILE
