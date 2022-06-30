@@ -8,7 +8,7 @@ sudo apt update
 sudo apt install -y curl apt-transport-https
 
 # Install minikube
-wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+wget https://storage.googleapis.com/minikube/releases/v1.25.0/minikube-linux-amd64
 sudo mv minikube-linux-amd64 /usr/local/bin/minikube
 sudo chmod 755 /usr/local/bin/minikube
 minikube version
