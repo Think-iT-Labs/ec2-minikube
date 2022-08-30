@@ -15,6 +15,12 @@ variable "minikube_instance_name" {
   default     = "minikube-on-ec2"
 }
 
+variable "instance_type" {
+  type        = string
+  description = "EC2 instance type"
+  default     = "t3.xlarge"
+}
+
 variable "exposed_ports" {
   type = list(object({
     port     = number
