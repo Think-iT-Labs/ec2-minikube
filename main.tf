@@ -90,9 +90,20 @@ resource "aws_security_group" "allow_additional_exposed_ports" {
 
 resource "aws_eip" "instance_elastic_ip" {}
 
+data "aws_ec2_instance_type" "this" {
+  instance_type = var.instance_type
+}
+
+locals {
+  setup_minikube_command = <<EOT
+/home/ubuntu/setup_minikube.sh \
+--elastic-ip ${aws_eip.instance_elastic_ip.public_ip} 
+EOT
+}
+
 resource "aws_instance" "minikube_instance" {
   ami           = data.aws_ami.ubuntu.id
-  instance_type = "t3.large"
+  instance_type = data.aws_ec2_instance_type.this.id
   key_name      = aws_key_pair.aws_keypair.key_name
   security_groups = [
     aws_security_group.allow_kube_api_server.name,
@@ -115,7 +126,10 @@ resource "aws_instance" "minikube_instance" {
     destination = "/home/ubuntu/setup_minikube.sh"
   }
   provisioner "remote-exec" {
-    inline = ["chmod +x /home/ubuntu/setup_minikube.sh", "/home/ubuntu/setup_minikube.sh ${aws_eip.instance_elastic_ip.public_ip}"]
+    inline = [
+      "chmod +x /home/ubuntu/setup_minikube.sh",
+      local.setup_minikube_command
+    ]
   }
 }
 

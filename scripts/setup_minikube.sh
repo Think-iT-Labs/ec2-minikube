@@ -2,7 +2,27 @@
 
 set -o errexit
 
-ELASTIC_IP=$1
+while (("$#")); do
+  case "$1" in
+  --elastic-ip)
+    if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+      ELASTIC_IP=$2
+      shift 2
+    else
+      echo "Error: Argument for $1 is missing" >&2
+      exit 1
+    fi
+    ;;
+  -* | --*=) # unsupported flags
+    echo "Error: Unsupported flag $1" >&2
+    exit 1
+    ;;
+  *) # preserve positional arguments
+    PARAMS="$PARAMS $1"
+    shift
+    ;;
+  esac
+done
 
 sudo apt update
 sudo apt install -y curl apt-transport-https
@@ -29,7 +49,9 @@ sudo usermod -aG docker $USER
 
 sudo apt install -y conntrack socat
 
-sudo minikube start --driver=none --embed-certs --apiserver-ips=${ELASTIC_IP}
+sudo minikube start --driver=none --embed-certs \
+  --apiserver-ips=${ELASTIC_IP}
+
 sudo minikube addons enable ingress
 sudo kubectl version -o json
 sudo kubectl cluster-info
