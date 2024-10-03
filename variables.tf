@@ -1,7 +1,7 @@
 variable "region" {
   type        = string
   description = "AWS Region"
-  default     = "eu-west-1"
+  default     = "eu-central-1"
 }
 
 variable "kubeconfig_output_location" {
@@ -9,16 +9,16 @@ variable "kubeconfig_output_location" {
   description = "KubeConfig file Location"
 }
 
-variable "minikube_instance_name" {
+variable "kind_instance_name" {
   type        = string
-  description = "Minikube EC2 Instance name"
-  default     = "minikube-on-ec2"
+  description = "kind EC2 Instance name"
+  default     = "kind-on-ec2"
 }
 
 variable "instance_type" {
   type        = string
   description = "EC2 instance type"
-  default     = "t3.xlarge"
+  default     = "t3.medium"
 }
 
 variable "exposed_ports" {
@@ -26,7 +26,7 @@ variable "exposed_ports" {
     port     = number
     protocol = string
   }))
-  description = "Ports to expose from Minikube EC2 instance"
+  description = "Ports to expose from kind EC2 instance"
   default = [{
     port     = 80
     protocol = "tcp"

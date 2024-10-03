@@ -22,6 +22,6 @@ if ! command -v yq &>/dev/null; then
     exit 1
 fi
 
-yq eval ".clusters[0].cluster.server = \"https://${REMOTE_ADDR}:8443\"" "$TMP_KUBECONFIG" >$OUTPUT_FILE
+yq eval ".clusters[0].cluster.server = \"https://${REMOTE_ADDR}:8443\" | .clusters[0].cluster.tls-server-name = \"think-control-plane\"" "$TMP_KUBECONFIG" >$OUTPUT_FILE
 
 chmod 600 $OUTPUT_FILE

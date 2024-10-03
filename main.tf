@@ -1,3 +1,7 @@
+locals {
+  stage = terraform.workspace
+}
+
 data "aws_ami" "ubuntu" {
   most_recent = true
 
@@ -23,7 +27,7 @@ resource "aws_key_pair" "aws_keypair" {
 }
 
 resource "aws_security_group" "allow_kube_api_server" {
-  name        = "${var.minikube_instance_name}-allow-kube-api-server"
+  name        = "${var.kind_instance_name}-allow-kube-api-server-${local.stage}"
   description = "Allow incoming K8S API Server traffic"
 
   ingress = [
@@ -33,7 +37,7 @@ resource "aws_security_group" "allow_kube_api_server" {
       to_port          = 22
       protocol         = "TCP"
       cidr_blocks      = ["0.0.0.0/0"]
-      ipv6_cidr_blocks = []
+      ipv6_cidr_blocks = ["::/0"]
       prefix_list_ids  = []
       security_groups  = []
       self             = false
@@ -44,7 +48,7 @@ resource "aws_security_group" "allow_kube_api_server" {
       to_port          = 8443
       protocol         = "TCP"
       cidr_blocks      = ["0.0.0.0/0"]
-      ipv6_cidr_blocks = []
+      ipv6_cidr_blocks = ["::/0"]
       prefix_list_ids  = []
       security_groups  = []
       self             = false
@@ -71,7 +75,7 @@ resource "aws_security_group" "allow_kube_api_server" {
 }
 
 resource "aws_security_group" "allow_additional_exposed_ports" {
-  name        = "${var.minikube_instance_name}-allow-additional-exposed-ports"
+  name        = "${var.kind_instance_name}-allow-additional-exposed-ports-${local.stage}"
   description = "Allow exposed ports from services"
   ingress = [
     for exposed_port in var.exposed_ports : {
@@ -95,13 +99,13 @@ data "aws_ec2_instance_type" "this" {
 }
 
 locals {
-  setup_minikube_command = <<EOT
-/home/ubuntu/setup_minikube.sh \
+  setup_kind_command = <<EOT
+/home/ubuntu/setup_kind.sh \
 --elastic-ip ${aws_eip.instance_elastic_ip.public_ip} 
 EOT
 }
 
-resource "aws_instance" "minikube_instance" {
+resource "aws_instance" "kind_instance" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = data.aws_ec2_instance_type.this.id
   key_name      = aws_key_pair.aws_keypair.key_name
@@ -111,7 +115,7 @@ resource "aws_instance" "minikube_instance" {
   ]
 
   tags = {
-    Name = var.minikube_instance_name
+    Name = var.kind_instance_name
   }
 
   connection {
@@ -122,20 +126,26 @@ resource "aws_instance" "minikube_instance" {
   }
 
   provisioner "file" {
-    source      = "${path.module}/scripts/setup_minikube.sh"
-    destination = "/home/ubuntu/setup_minikube.sh"
+    source      = "${path.module}/scripts/setup_kind.sh"
+    destination = "/home/ubuntu/setup_kind.sh"
   }
+
+  provisioner "file" {
+    source      = "${path.module}/kindConfig.yaml"
+    destination = "/home/ubuntu/kindConfig.yaml"
+  }
+
   provisioner "remote-exec" {
     inline = [
-      "chmod +x /home/ubuntu/setup_minikube.sh",
-      local.setup_minikube_command
+      "chmod +x /home/ubuntu/setup_kind.sh",
+      local.setup_kind_command
     ]
   }
 }
 
 resource "null_resource" "download_kubeconfig" {
   depends_on = [
-    aws_instance.minikube_instance
+    aws_instance.kind_instance
   ]
   triggers = {
     "timestamp" = timestamp()
@@ -148,7 +158,7 @@ resource "null_resource" "download_kubeconfig" {
   }
 }
 
-resource "aws_eip_association" "minikube_eip_assoc" {
-  instance_id   = aws_instance.minikube_instance.id
+resource "aws_eip_association" "kind_eip_assoc" {
+  instance_id   = aws_instance.kind_instance.id
   allocation_id = aws_eip.instance_elastic_ip.id
 }

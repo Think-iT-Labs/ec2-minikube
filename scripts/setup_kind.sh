@@ -27,18 +27,15 @@ done
 sudo apt update
 sudo apt install -y curl apt-transport-https
 
-# Install minikube
-wget https://storage.googleapis.com/minikube/releases/v1.25.0/minikube-linux-amd64
-sudo mv minikube-linux-amd64 /usr/local/bin/minikube
-sudo chmod 755 /usr/local/bin/minikube
-minikube version
-
 # Install kubectl
+echo "Installing kubectl..."
 curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
 chmod +x ./kubectl
 sudo mv ./kubectl /usr/local/bin/kubectl
+echo "done installing kubectl"
 
 # Install Docker
+echo "Installing docker..."
 sudo apt install -y ca-certificates curl gnupg lsb-release
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu \
@@ -46,12 +43,15 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docke
 sudo apt update
 sudo apt install -y docker-ce docker-ce-cli containerd.io
 sudo usermod -aG docker $USER
+echo "done installing docker"
 
-sudo apt install -y conntrack socat
+# Install kind
+echo "Installing kind..."
+sudo snap install go --classic
+go install sigs.k8s.io/kind@v0.24.0
+sudo mv go/bin/kind /usr/local/bin
+echo "done installing kind"
 
-sudo minikube start --driver=none --embed-certs \
-  --apiserver-ips=${ELASTIC_IP}
-
-sudo minikube addons enable ingress
-sudo kubectl version -o json
-sudo kubectl cluster-info
+# Start cluster
+echo "Starting cluster..."
+sudo kind create cluster --config kindConfig.yaml --name=think
